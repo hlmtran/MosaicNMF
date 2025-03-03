@@ -1,0 +1,291 @@
+---
+title: "Integration_K4_K27_CUTAC"
+author: "Hoang-Le Tran"
+date: "2025-02-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(data.table)
+library(tidyverse)
+```
+When integrating, make sure data sets are scaled such that all values for each dataset adds to 1
+```{r}
+CUTAC_summary_path  = "/varidata/research/projects/janssens/Le_Tran/Integration_K4_K27_CUTAC/matrices/souper-star.souporcell.CUTAC.Combined.SplitReadCounts.csv.gz"
+CUTAC_matrix_path   = "/varidata/research/projects/janssens/Le_Tran/Integration_K4_K27_CUTAC/matrices/CUTAC_Sparse_Matrix.mtx"
+CUTAC_barcode_path  = "/varidata/research/projects/janssens/Le_Tran/Integration_K4_K27_CUTAC/matrices/CUTAC_Sparse_Matrix_cols.txt"
+
+K4_summary_path     = "/varidata/research/projects/janssens/Le_Tran/Integration_K4_K27_CUTAC/matrices/souper-star.souporcell.H3K4me1-2-3.Combined.ReadCounts.csv.gz"
+K4_matrix_path      = "/varidata/research/projects/janssens/Le_Tran/Integration_K4_K27_CUTAC/matrices/K4me123_Sparse_Matrix.mtx"
+K4_barcode_path     = "/varidata/research/projects/janssens/Le_Tran/Integration_K4_K27_CUTAC/matrices/K4me123_Sparse_Matrix_cols.txt"
+K4_directory_path   = "/varidata/research/projects/janssens/Le_Tran/Integration_K4_K27_CUTAC/matrices/K4me123_Cluster_Cell_Names/"
+
+K27_summary_path    = "/varidata/research/projects/janssens/Le_Tran/Integration_K4_K27_CUTAC/matrices/souper-star.souporcell.H3K27me3.Combined.ReadCounts.csv.gz"
+K27_matrix_path     = "/varidata/research/projects/janssens/Le_Tran/Integration_K4_K27_CUTAC/matrices/K27me3_Sparse_Matrix.mtx"
+K27_barcode_path    = "/varidata/research/projects/janssens/Le_Tran/Integration_K4_K27_CUTAC/matrices/K27me3_Sparse_Matrix_cols.txt"
+K27_directory_path  = "/varidata/research/projects/janssens/Le_Tran/Integration_K4_K27_CUTAC/matrices/K27me3_Cluster_Cell_Names/"
+
+```
+
+```{r functions}
+createMetadata = function(directory){
+  fileList = list.files(directory)
+  dfList = replicate(length(fileList),data.frame())
+  for (i in 1:length(fileList)){
+    cell_type = fileList[i]
+    dfList[[i]] = read.csv(file.path(directory,cell_type),sep = " ")
+    dfList[[i]][,"cell_type"] = cell_type
+  }
+  temp = dplyr::bind_rows(dfList)
+  colnames(temp) = c("barcode","cell_type")
+  return(temp)
+}
+
+combine_Metadata = function(dfMetadata,df){
+  assertthat::assert_that(nrow(dfMetadata) == nrow(df),msg="Dimensions do not match.")
+  assertthat::assert_that(all(dfMetadata$barcode %in% df$barcode),msg="Barcodes do not match")
+  
+  dfMetadata = dplyr::left_join(dfMetadata,df,by=dplyr::join_by(barcode))
+  return(dfMetadata)
+}
+
+get_cluster_data = function(barcode_path,clusterDir){
+  cell_metadata  = read.csv(barcode_path,header = F)
+  colnames(cell_metadata) = "barcode"
+  cluster_metadata = createMetadata(clusterDir)
+  cell_metadata = combine_Metadata(cell_metadata,cluster_metadata)
+  cell_metadata = tidyr::separate(cell_metadata,sep="#",barcode,c("identifier","barcode"))
+  return(cell_metadata)
+}
+
+scaleDataSet = function(dataset){
+  scaleFactor = sum(dataset,na.rm = TRUE)
+  dataset = dataset/scaleFactor
+  
+  assertthat::assert_that(sum(dataset,na.rm=TRUE)==1,msg = "Sum of matrix not equal 1 after scaling.")
+  return(dataset)
+}
+
+checkBarcode = function(barcode){
+   all(grepl("^.+#[A-Z]+-[0-9]+$", barcode))#"^.*#.+$" "^[A-Za-z0-9_]+#[A-Z]+-[0-9]+$"
+}
+extractBarcode = function(dataset){
+  barcodes = colnames(dataset)
+  assertthat::assert_that(checkBarcode(barcodes),msg="Barcode format not expected. Please double check.")
+  colnames(dataset) = sub(".*#","",barcodes)
+  return(dataset)
+}
+```
+
+```{r preprocess metadata}
+K4_cell_metadata = read.csv(K4_summary_path)
+cluster_info = get_cluster_data(K4_barcode_path,K4_directory_path)
+K4_cell_metadata = dplyr::left_join(cluster_info,K4_cell_metadata)
+
+K27_cell_metadata = read.csv(K27_summary_path)
+cluster_info = get_cluster_data(K27_barcode_path,K27_directory_path)
+K27_cell_metadata = dplyr::left_join(cluster_info,K27_cell_metadata)
+
+CUTAC_cell_metadata = read.csv(CUTAC_summary_path)
+CUTAC_barcodes = read.csv(CUTAC_barcode_path)
+colnames(CUTAC_barcodes) = "barcode"
+CUTAC_barcodes = tidyr::separate(CUTAC_barcodes,sep="#",barcode,c("identifier","barcode"))
+#left_join  keeps order for left hand data, preserves barcode order
+CUTAC_cell_metadata = dplyr::left_join(CUTAC_barcodes,CUTAC_cell_metadata)
+```
+
+```{r}
+# K4_counts = Matrix::readMM(K4_matrix)
+# colnames(K4_counts) = K4_cell_metadata$barcode
+# 
+# K27_counts = Matrix::readMM(K27_matrix)
+# colnames(K27_counts) = K27_cell_metadata$barcode
+# 
+# CUTAC_counts = Matrix::readMM(CUTAC_matrix)
+# colnames(CUTAC_counts) = CUTAC_cell_metadata$barcode
+# # CUTAC_cell_metadata = read.csv(CUTAC_barcode_path)
+# # CUTAC_counts = Matrix::readMM(CUTAC_matrix)
+```
+
+```{r test data}
+set.seed(123)
+K27 <- Matrix::Matrix(sample(0:1, 50, replace=TRUE), nrow=10, sparse=TRUE)
+CUTAC <- Matrix::Matrix(sample(0:1, 50, replace=TRUE), nrow=10, sparse=TRUE)
+K4 <- Matrix::Matrix(sample(0:1, 50, replace=TRUE), nrow=10, sparse=TRUE)
+
+# Assign cell names (column names)
+colnames(K27) <- c("Cell1", "Cell2", "Cell3", "Cell4", "Cell5")
+colnames(CUTAC) <- c("Cell2", "Cell3", "Cell6", "Cell7", "Cell8")
+colnames(K4) <- c("Cell3", "Cell4", "Cell7", "Cell9", "Cell10")
+
+rownames(K27) = paste0("K27_",1:10)
+rownames(K4) = paste0("K4_",1:10)
+rownames(CUTAC) = paste0("CUTAC_",1:10)
+```
+
+```{r matrix stacking draft}
+
+# Get all unique cell names across datasets
+all_cells <- unique(c(colnames(K27), colnames(CUTAC), colnames(K4)))
+
+# Function to align sparse matrices
+align_sparse_matrix <- function(mat, all_cells) {
+  missing_cells <- setdiff(all_cells, colnames(mat))  # Find missing columns
+  extra_cols <- Matrix::Matrix(NaN, nrow(mat), length(missing_cells), sparse=TRUE)  # Create sparse zero columns
+  colnames(extra_cols) <- missing_cells
+  mat_aligned <- cbind(mat, extra_cols)  # Add missing columns
+  mat_aligned <- mat_aligned[, all_cells, drop=FALSE]  # Reorder columns
+  return(mat_aligned)
+}
+
+# Align all matrices
+K27_aligned <- align_sparse_matrix(K27, all_cells)
+CUTAC_aligned <- align_sparse_matrix(CUTAC, all_cells)
+K4_aligned <- align_sparse_matrix(K4, all_cells)
+
+# Stack matrices row-wise (bins stacked)
+final_stack <- rbind(K27_aligned, CUTAC_aligned, K4_aligned)  # Sparse stacking
+
+# Print structure
+print(final_stack)
+print(as.matrix(final_stack))
+```
+
+```{r prepping matrix}
+CUTAC_FRIP_FRIB_DR_Data <- readRDS("~/janssens-lab/Le_Tran/Integration_K4_K27_CUTAC/matrices/CUTAC_FRIP_FRIB_DR_Data.rds")
+K4me123_Data <- readRDS("~/janssens-lab/Le_Tran/Integration_K4_K27_CUTAC/matrices/K4me123_Data.rds")
+K27me3_Data <- readRDS("~/janssens-lab/Le_Tran/Integration_K4_K27_CUTAC/matrices/K27me3_Data.rds")
+
+rownames(CUTAC_FRIP_FRIB_DR_Data) = paste0("CUTAC_bin",1:nrow(CUTAC_FRIP_FRIB_DR_Data))
+rownames(K4me123_Data) = paste0("K4_bin",1:nrow(K4me123_Data))
+rownames(K27me3_Data) = paste0("K27_bin",1:nrow(K27me3_Data))
+
+CUTAC_FRIP_FRIB_DR_Data = extractBarcode(CUTAC_FRIP_FRIB_DR_Data)
+K4me123_Data = extractBarcode(K4me123_Data)
+K27me3_Data = extractBarcode(K27me3_Data)
+
+CUTAC_matrix = SummarizedExperiment::assay(CUTAC_FRIP_FRIB_DR_Data)
+K4_matrix =  SummarizedExperiment::assay(K4me123_Data)
+K27_matrix =  SummarizedExperiment::assay(K27me3_Data)
+```
+
+```{r stack function}
+testList = c(K27,CUTAC,K4)
+
+getUniqueCells = function(dataList){
+  all_cells = lapply(dataList,colnames) |> unlist() |> unique()
+  return(all_cells)
+}
+getTotalRows = function(dataList){
+  tot = lapply(dataList,nrow) |> unlist() |> sum()
+  return(tot)
+}
+align_sparse_matrix <- function(mat, all_cells, missingValue = NaN) {
+  missing_cells <- setdiff(all_cells, colnames(mat))  # Find missing columns
+  extra_cols <- Matrix::Matrix(missingValue, nrow(mat), length(missing_cells), sparse=TRUE)  # Create sparse zero columns
+  colnames(extra_cols) <- missing_cells
+  mat_aligned <- cbind(mat, extra_cols)  # Add missing columns
+  mat_aligned <- mat_aligned[, all_cells, drop=FALSE]  # Reorder columns
+  return(mat_aligned)
+}
+
+stackMatrix = function(dataList){
+  uniqueCells = getUniqueCells(dataList)
+
+  alignedMat = Matrix::Matrix(0,getTotalRows(dataList),length(uniqueCells),sparse = TRUE)
+  colnames(alignedMat) = uniqueCells
+  rownames(alignedMat) = paste0("row",1:nrow(alignedMat)) #need to have row names to update row names
+  
+  startRow = 1
+  for (i in 1:length(dataList)){
+    endRow = startRow+nrow(dataList[[i]])-1
+    alignedMat[startRow:endRow,] = align_sparse_matrix(dataList[[i]],uniqueCells,NaN)
+    rownames(alignedMat)[startRow:endRow] = rownames(dataList[[i]])
+    startRow = startRow+nrow(dataList[[i]])
+  }
+  return(alignedMat)
+}
+
+
+
+
+a_mat = stackMatrix(testList)
+
+print(a_mat)
+print(final_stack)
+identical(a_mat,final_stack)
+```
+
+```{r mask function}
+getRandomLogical = function(dataset,ratio,seed=null){
+  if (!is.null(seed)){
+      set.seed(seed)
+  }
+  n_row = nrow(dataset)
+  n_col = ncol(dataset)
+  
+  randMat = Matrix::rsparsematrix(n_row, n_col, density = ratio, rand.x = NULL)
+  dim(randMat)
+  rownames(randMat) = rownames(dataset)
+  colnames(randMat) = colnames(dataset)
+  return(randMat)
+}
+
+getRandomMask = function(dataList,ratio,seed=NULL){
+  uniqueCells = getUniqueCells(dataList)
+
+  alignedMat = Matrix::Matrix(FALSE,getTotalRows(dataList),length(uniqueCells),sparse = TRUE)
+  colnames(alignedMat) = uniqueCells
+  rownames(alignedMat) = paste0("row",1:nrow(alignedMat)) #need to have row names to update row names
+  
+  startRow = 1
+  for (i in 1:length(dataList)){
+    endRow = startRow+nrow(dataList[[i]])-1
+    
+    alignedMat[startRow:endRow,] = align_sparse_matrix(
+      mat = getRandomLogical(dataList[[i]],ratio,seed),
+      all_cells = uniqueCells,
+      missingValue = FALSE)
+    
+    rownames(alignedMat)[startRow:endRow] = rownames(dataList[[i]])
+    startRow = startRow+nrow(dataList[[i]])
+  }
+  return(alignedMat)
+}
+getRandomMask(testList,.20,2)
+
+# stacked_CUTAC_K27_K4 = stackMatrix(c(CUTAC_matrix,K4_matrix,K27_matrix))
+
+```
+```{r rank determination}
+library(RcppML)
+plotMSEvsRank = function(dataset,ranks,mask=NULL,seed=NULL){
+  validation = list()
+  for(rank in ranks){
+    if(!is.null(seed)){
+      mod = nmf(dataset, k = rank, mask = mask, seed = seed, tol = 1e-3)
+    } else
+      mod = RcppML::nmf(dataset, k = rank, mask = mask, tol = 1e-3)
+    
+    validation[[rank]] = mse(mod@w,mod@d,mod@h,dataset)
+  }
+  
+  plot(ranks,unlist(validation))
+}
+
+plotMSEvsRank(a_mat,1:10,mask="NA",123)
+```
+
+```{r validation}
+validationMask = getRandomMask(testList,.2,123)
+a_mat_train = a_mat
+a_mat_train[validationMask] = NaN
+test_mod = RcppML::nmf(a_mat, k = 5,mask='NA', seed = 123, tol = 1e-3)
+
+RcppML::evaluate(x = test_mod, data = a_mat, mask = as(validationMask,"dgCMAtrix"), missing_only = TRUE)
+```
+
