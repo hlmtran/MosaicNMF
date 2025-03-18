@@ -4,6 +4,7 @@
 #' Missing values in the alignment process are filled with `NaN`.
 #'
 #' @param dataList A list of sparse matrices (each of class `dgCMatrix`) to be stacked.
+#' @param missingValue A numeric or logical value to fill missing columns (default: `NaN`).
 #' @return A sparse numeric matrix (`dgCMatrix`) with rows from all matrices in `dataList` and columns corresponding to unique cell names.
 #' Missing values are set to `NaN`.
 #' @details
@@ -33,7 +34,7 @@
 #'
 #' @import Matrix
 #' @export
-stackMatrix = function(dataList){
+stackMatrix = function(dataList,missingValue = NaN){
   uniqueCells = getUniqueCells(dataList)
 
   alignedMat = Matrix::Matrix(0,getTotalRows(dataList),length(uniqueCells),sparse = TRUE)
@@ -43,7 +44,7 @@ stackMatrix = function(dataList){
   startRow = 1
   for (i in 1:length(dataList)){
     endRow = startRow+nrow(dataList[[i]])-1
-    alignedMat[startRow:endRow,] = align_sparse_matrix(dataList[[i]],uniqueCells,NaN)
+    alignedMat[startRow:endRow,] = align_sparse_matrix(dataList[[i]],uniqueCells,missingValue)
     rownames(alignedMat)[startRow:endRow] = rownames(dataList[[i]])
     startRow = startRow+nrow(dataList[[i]])
   }
