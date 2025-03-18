@@ -4,10 +4,12 @@
 \alias{stackMatrix}
 \title{Stack and Align Sparse Matrices}
 \usage{
-stackMatrix(dataList)
+stackMatrix(dataList, missingValue = NaN)
 }
 \arguments{
 \item{dataList}{A list of sparse matrices (each of class \code{dgCMatrix}) to be stacked.}
+
+\item{missingValue}{A numeric or logical value to fill missing columns (default: \code{NaN}).}
 }
 \value{
 A sparse numeric matrix (\code{dgCMatrix}) with rows from all matrices in \code{dataList} and columns corresponding to unique cell names.
