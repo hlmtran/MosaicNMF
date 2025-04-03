@@ -13,7 +13,7 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 
 // rand_spmat
 Eigen::SparseMatrix<double> rand_spmat(const uint32_t nrow, const uint32_t ncol, const uint32_t inv_density, const uint32_t seed);
-RcppExport SEXP _FastNMF_rand_spmat(SEXP nrowSEXP, SEXP ncolSEXP, SEXP inv_densitySEXP, SEXP seedSEXP) {
+RcppExport SEXP _MosaicNMF_rand_spmat(SEXP nrowSEXP, SEXP ncolSEXP, SEXP inv_densitySEXP, SEXP seedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -27,7 +27,7 @@ END_RCPP
 }
 // rand_mat
 Eigen::MatrixXd rand_mat(const uint32_t nrow, const uint32_t ncol, const uint32_t seed);
-RcppExport SEXP _FastNMF_rand_mat(SEXP nrowSEXP, SEXP ncolSEXP, SEXP seedSEXP) {
+RcppExport SEXP _MosaicNMF_rand_mat(SEXP nrowSEXP, SEXP ncolSEXP, SEXP seedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -40,7 +40,7 @@ END_RCPP
 }
 // c_nmf
 Rcpp::List c_nmf(const Eigen::SparseMatrix<double> A, const double tol, const uint16_t maxit, const bool verbose, const double L1, Eigen::MatrixXd w);
-RcppExport SEXP _FastNMF_c_nmf(SEXP ASEXP, SEXP tolSEXP, SEXP maxitSEXP, SEXP verboseSEXP, SEXP L1SEXP, SEXP wSEXP) {
+RcppExport SEXP _MosaicNMF_c_nmf(SEXP ASEXP, SEXP tolSEXP, SEXP maxitSEXP, SEXP verboseSEXP, SEXP L1SEXP, SEXP wSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -56,7 +56,7 @@ END_RCPP
 }
 // c_nmf_rand
 size_t c_nmf_rand(const uint32_t seed, const uint32_t nrow, const uint32_t ncol, const uint32_t k, const uint16_t maxit);
-RcppExport SEXP _FastNMF_c_nmf_rand(SEXP seedSEXP, SEXP nrowSEXP, SEXP ncolSEXP, SEXP kSEXP, SEXP maxitSEXP) {
+RcppExport SEXP _MosaicNMF_c_nmf_rand(SEXP seedSEXP, SEXP nrowSEXP, SEXP ncolSEXP, SEXP kSEXP, SEXP maxitSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -71,7 +71,7 @@ END_RCPP
 }
 // run_benchmarking
 std::vector<size_t> run_benchmarking();
-RcppExport SEXP _FastNMF_run_benchmarking() {
+RcppExport SEXP _MosaicNMF_run_benchmarking() {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -79,17 +79,33 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// getMaskVector
+std::vector<bool> getMaskVector(int ind, const std::string& dim, const std::vector<std::vector<int>>& rows, const std::vector<std::vector<int>>& cols, int dimSize);
+RcppExport SEXP _MosaicNMF_getMaskVector(SEXP indSEXP, SEXP dimSEXP, SEXP rowsSEXP, SEXP colsSEXP, SEXP dimSizeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type ind(indSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type dim(dimSEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::vector<int>>& >::type rows(rowsSEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::vector<int>>& >::type cols(colsSEXP);
+    Rcpp::traits::input_parameter< int >::type dimSize(dimSizeSEXP);
+    rcpp_result_gen = Rcpp::wrap(getMaskVector(ind, dim, rows, cols, dimSize));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_FastNMF_rand_spmat", (DL_FUNC) &_FastNMF_rand_spmat, 4},
-    {"_FastNMF_rand_mat", (DL_FUNC) &_FastNMF_rand_mat, 3},
-    {"_FastNMF_c_nmf", (DL_FUNC) &_FastNMF_c_nmf, 6},
-    {"_FastNMF_c_nmf_rand", (DL_FUNC) &_FastNMF_c_nmf_rand, 5},
-    {"_FastNMF_run_benchmarking", (DL_FUNC) &_FastNMF_run_benchmarking, 0},
+    {"_MosaicNMF_rand_spmat", (DL_FUNC) &_MosaicNMF_rand_spmat, 4},
+    {"_MosaicNMF_rand_mat", (DL_FUNC) &_MosaicNMF_rand_mat, 3},
+    {"_MosaicNMF_c_nmf", (DL_FUNC) &_MosaicNMF_c_nmf, 6},
+    {"_MosaicNMF_c_nmf_rand", (DL_FUNC) &_MosaicNMF_c_nmf_rand, 5},
+    {"_MosaicNMF_run_benchmarking", (DL_FUNC) &_MosaicNMF_run_benchmarking, 0},
+    {"_MosaicNMF_getMaskVector", (DL_FUNC) &_MosaicNMF_getMaskVector, 5},
     {NULL, NULL, 0}
 };
 
-RcppExport void R_init_FastNMF(DllInfo *dll) {
+RcppExport void R_init_MosaicNMF(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }
