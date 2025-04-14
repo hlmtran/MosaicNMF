@@ -1,0 +1,22 @@
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>/404.html</loc></url>
+<url><loc>/articles/Mosaic_Integration.html</loc></url>
+<url><loc>/articles/index.html</loc></url>
+<url><loc>/authors.html</loc></url>
+<url><loc>/index.html</loc></url>
+<url><loc>/reference/align_sparse_matrix.html</loc></url>
+<url><loc>/reference/crossValidateWithMissingValues.html</loc></url>
+<url><loc>/reference/getMaskMatrix.html</loc></url>
+<url><loc>/reference/getMaskVector.html</loc></url>
+<url><loc>/reference/getMissingIndices.html</loc></url>
+<url><loc>/reference/getRandomMask.html</loc></url>
+<url><loc>/reference/getTestData.html</loc></url>
+<url><loc>/reference/index.html</loc></url>
+<url><loc>/reference/plotCV.html</loc></url>
+<url><loc>/reference/plotMSEvsRank.html</loc></url>
+<url><loc>/reference/run_benchmarking.html</loc></url>
+<url><loc>/reference/scaleDataset.html</loc></url>
+<url><loc>/reference/stackMatrix.html</loc></url>
+<url><loc>/reference/validateImputedValues.html</loc></url>
+</urlset>
+

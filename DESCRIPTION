@@ -1,9 +1,9 @@
 Package: MosaicNMF
-Title: What the Package Does (One Line, Title Case)
+Title: Mosaic integration using Non-negative Matrix Factorization
 Version: 0.0.0.9000
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+    person("Hoang-Le", "Tran", , "hoangle.tran@vai.org", role = c("aut", "cre"))
+Description: This package utilizes Non-negative Matrix Factorization to perform mosaic integration, allowing the analysis of multimodal datasets.
 License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
     license
 LinkingTo: Rcpp, RcppEigen

@@ -16,6 +16,7 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(MosaicNMF)
+library(RcppML)
 ```
 
 ```{r data}
@@ -38,12 +39,14 @@ missingValues = MosaicNMF::getMaskMatrix(
   )
 
 
-mask2 = MosaicNMF::getRandomMask(dataList = testList,ratio = .20,seed = 2)
+# mask2 = MosaicNMF::getRandomMask(dataList = testList,ratio = .20,seed = 2)
 
 # debug(MosaicNMF::crossValidateWithMissingValues)
+# undebug(MosaicNMF::crossValidateWithMissingValues)
 res= MosaicNMF::crossValidateWithMissingValues(data=a_mat,k=1:10,missingValues = missingValues)
-plot = MosaicNMF::plotCV(res)
-
+# res= RcppML::crossValidate(data=a_mat,k=3:5)
+nplot = MosaicNMF::plotCV(res)
+nplot
 ```
 
 ```{r}
