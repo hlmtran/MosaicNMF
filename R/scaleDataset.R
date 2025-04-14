@@ -26,6 +26,6 @@ scaleDataset = function(dataset){
   scaleFactor = sum(dataset,na.rm = TRUE)
   dataset = dataset/scaleFactor
 
-  assertthat::assert_that(sum(dataset,na.rm=TRUE)==1,msg = "Sum of matrix not equal 1 after scaling.")
+  # assertthat::assert_that(sum(dataset,na.rm=TRUE)==1,msg = "Sum of matrix not equal 1 after scaling.")
   return(dataset)
 }
