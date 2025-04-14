@@ -30,9 +30,14 @@ for (i in 1:length(testList)){
 }
 ```
 
-
+Stack matrix using list of data and filling missing values with 0
 ```{r}
 a_mat = MosaicNMF::stackMatrix(dataList = testList,missingValue=0)
+a_mat
+```
+
+Generate a matrix indicating the location of missing values to be imputed
+```{r}
 missingValues = MosaicNMF::getMissingIndices(testList)
 
 missingValues = MosaicNMF::getMaskMatrix(
@@ -42,11 +47,23 @@ missingValues = MosaicNMF::getMaskMatrix(
   numRow = MosaicNMF:::getTotalRows(testList),
   numCol = length(MosaicNMF:::getUniqueCells(testList))
   )
+```
 
+Determine the most optimal rank using cross validation on randomly masked values
+```{r}
 res= MosaicNMF::crossValidateWithMissingValues(data=a_mat,k=1:10,missingValues = missingValues)
 
 nplot = MosaicNMF::plotCV(res)
 nplot
 ```
 
+Once you have determined the best rank. Use RcppML to perform NMF at rank 8
+```{r}
+m <- RcppML::nmf(a_mat, 8, mask = missingValues)
+```
+
+To impute all missing values. Perform W*H
+```{r}
+A_hat = m@w %*% m@h
+```
 
