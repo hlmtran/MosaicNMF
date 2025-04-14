@@ -18,15 +18,20 @@ knitr::opts_chunk$set(
 library(MosaicNMF)
 library(RcppML)
 ```
-
+Generate random data
 ```{r data}
 testList = MosaicNMF::getTestData()
 ```
 
+Scale each dataset so that each modality contribute equally
 ```{r}
 for (i in 1:length(testList)){
   testList[[i]] = MosaicNMF::scaleDataset(testList[[i]])
 }
+```
+
+
+```{r}
 a_mat = MosaicNMF::stackMatrix(dataList = testList,missingValue=0)
 missingValues = MosaicNMF::getMissingIndices(testList)
 
@@ -38,18 +43,10 @@ missingValues = MosaicNMF::getMaskMatrix(
   numCol = length(MosaicNMF:::getUniqueCells(testList))
   )
 
-
-# mask2 = MosaicNMF::getRandomMask(dataList = testList,ratio = .20,seed = 2)
-
-# debug(MosaicNMF::crossValidateWithMissingValues)
-# undebug(MosaicNMF::crossValidateWithMissingValues)
 res= MosaicNMF::crossValidateWithMissingValues(data=a_mat,k=1:10,missingValues = missingValues)
-# res= RcppML::crossValidate(data=a_mat,k=3:5)
+
 nplot = MosaicNMF::plotCV(res)
 nplot
 ```
 
-```{r}
-
-```
 
